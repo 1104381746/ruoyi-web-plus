@@ -2,11 +2,13 @@
 <script setup lang="ts">
 import type { ConversationItem } from 'vue-element-plus-x/types/Conversations';
 import type { ChatSessionVo } from '@/api/session/types';
+import { storeToRefs } from 'pinia';
 import { useRoute, useRouter } from 'vue-router';
 import { get_session } from '@/api';
 import logo from '@/assets/images/logo.png';
 import Collapse from '@/layouts/components/Header/components/Collapse.vue';
 import { useDesignStore } from '@/stores';
+import { useImageStore } from '@/stores/modules/image';
 import { useSessionStore } from '@/stores/modules/session';
 
 const route = useRoute();
@@ -48,6 +50,22 @@ function handleSearch(keyword: string) {
 function handleClearSearch() {
   sessionStore.clearSearch();
 }
+
+const imageStore = useImageStore();
+const { records: imageRecords, currentSessionId } = storeToRefs(imageStore);
+
+// 按 sessionId 分组，每组取最早一条作为代表（records 按 createTime 倒序，所以取最后一条）
+const imageSessions = computed(() => {
+  const map = new Map<string, typeof imageRecords.value[0]>();
+  // records 是倒序的，遍历时后面的是更早的，用后面的覆盖前面的得到最早一条
+  for (const r of imageRecords.value) {
+    const key = r.sessionId || String(r.id);
+    map.set(key, r);
+  }
+  return Array.from(map.values());
+});
+
+const isImageMode = computed(() => route.path.startsWith('/image'));
 
 onMounted(async () => {
   // 获取会话列表
@@ -191,8 +209,26 @@ function handleMenuCommand(command: string, item: ConversationItem<ChatSessionVo
       </div>
 
       <div class="aside-body">
+        <!-- 模式切换 -->
+        <div class="mode-switcher flex border-b mb-2 px-2 pt-2">
+          <button
+            class="flex-1 py-1.5 text-sm rounded-l"
+            :class="route.path.startsWith('/chat') ? 'bg-primary text-white' : 'bg-gray-100'"
+            @click="handleCreatChat"
+          >
+            AI 对话
+          </button>
+          <button
+            class="flex-1 py-1.5 text-sm rounded-r"
+            :class="route.path === '/image' ? 'bg-primary text-white' : 'bg-gray-100'"
+            @click="() => { imageStore.newSession(); router.push('/image') }"
+          >
+            AI 生图
+          </button>
+        </div>
+
         <!-- 搜索框 -->
-        <div class="search-wrapper">
+        <div v-if="!route.path.startsWith('/image')" class="search-wrapper">
           <el-input
             v-model="searchKeyword"
             placeholder="搜索对话"
@@ -211,7 +247,37 @@ function handleMenuCommand(command: string, item: ConversationItem<ChatSessionVo
         <!-- 分割线 -->
         <div class="divider" />
 
-        <div class="aside-content">
+        <!-- 新建按钮 -->
+        <div class="px-3 mb-2">
+          <el-button class="w-full" @click="isImageMode ? imageStore.newSession() : handleCreatChat()">
+            <el-icon class="mr-1">
+              <Plus />
+            </el-icon>
+            {{ isImageMode ? '新建生图' : '新建对话' }}
+          </el-button>
+        </div>
+
+        <div v-if="isImageMode" class="aside-content">
+          <div v-if="imageSessions.length > 0" class="image-history-list overflow-y-auto">
+            <div
+              v-for="r in imageSessions"
+              :key="r.sessionId || r.id"
+              class="history-item px-3 py-2 mx-2 rounded-lg cursor-pointer"
+              :class="currentSessionId === (r.sessionId || String(r.id)) ? 'history-item-active' : 'history-item-hover'"
+              @click="imageStore.setCurrentRecord(r)"
+            >
+              <div class="text-xs text-gray-700 truncate">
+                {{ r.prompt }}
+              </div>
+              <div class="text-xs text-gray-400 mt-0.5">
+                {{ r.createTime?.slice(0, 10) }}
+              </div>
+            </div>
+          </div>
+          <el-empty v-else class="h-full flex-center" description="暂无生图记录" />
+        </div>
+
+        <div v-if="!route.path.startsWith('/image')" class="aside-content">
           <div v-if="conversationsList.length > 0" class="conversations-wrap overflow-hidden">
             <Conversations
               v-model:active="active"
@@ -412,6 +478,20 @@ function handleMenuCommand(command: string, item: ConversationItem<ChatSessionVo
   // 会话列表高度-悬停样式
   .conversations-wrap {
     height: calc(100vh - 155px) !important;
+  }
+}
+
+.image-history-list {
+  height: calc(100vh - 180px);
+  .history-item {
+    transition: background-color 0.15s;
+  }
+  .history-item-active {
+    background-color: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  .history-item-hover:hover {
+    background-color: rgba(0, 0, 0, 0.04);
   }
 }
 

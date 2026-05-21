@@ -31,6 +31,11 @@ export const layoutRouter: RouteRecordRaw[] = [
           isDefaultChat: false,
         },
       },
+      {
+        path: '/image',
+        name: 'image',
+        component: () => import('@/pages/image/index.vue'),
+      },
     ],
   },
 ];

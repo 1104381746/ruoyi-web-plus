@@ -1,6 +1,7 @@
 <!-- Header 头部 -->
 <script setup lang="ts">
 import { onKeyStroke } from '@vueuse/core';
+import { useRoute } from 'vue-router';
 import { SIDE_BAR_WIDTH } from '@/config/index';
 import { useDesignStore, useUserStore } from '@/stores';
 import { useSessionStore } from '@/stores/modules/session';
@@ -9,6 +10,8 @@ import Collapse from './components/Collapse.vue';
 import CreateChat from './components/CreateChat.vue';
 import LoginBtn from './components/LoginBtn.vue';
 import TitleEditing from './components/TitleEditing.vue';
+
+const route = useRoute();
 
 const userStore = useUserStore();
 const designStore = useDesignStore();
@@ -62,7 +65,10 @@ onKeyStroke(event => event.ctrlKey && event.key.toLowerCase() === 'k', handleCtr
 
             <!-- 中间 -->
             <div class="middle-box flex-1 min-w-0 ml-12px">
-              <TitleEditing />
+              <template v-if="route.path === '/image'">
+                <span class="text-base font-medium">AI 生图</span>
+              </template>
+              <TitleEditing v-else />
             </div>
           </div>
         </div>

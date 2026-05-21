@@ -5,6 +5,7 @@ import type { BubbleProps } from 'vue-element-plus-x/types/Bubble';
 import type { BubbleListInstance } from 'vue-element-plus-x/types/BubbleList';
 import type { ThinkingStatus } from 'vue-element-plus-x/types/Thinking';
 import type { ToolCallInfo } from './types';
+import { ElMessage } from 'element-plus';
 import { useHookFetch } from 'hook-fetch/vue';
 import { nextTick } from 'vue';
 import { useRoute } from 'vue-router';
@@ -239,6 +240,12 @@ function handleDataChunk(chunk: AnyObject | string): boolean {
 
       if (eventType === 'done' || dataObj?.done === true) {
         console.log('[SSE] 流结束');
+        return true;
+      }
+
+      if (eventType === 'error' && dataObj) {
+        const errMsg = dataObj.error || '请求失败';
+        ElMessage.error(errMsg);
         return true;
       }
 
