@@ -10,6 +10,7 @@ import Collapse from '@/layouts/components/Header/components/Collapse.vue';
 import { useDesignStore } from '@/stores';
 import { useImageStore } from '@/stores/modules/image';
 import { useSessionStore } from '@/stores/modules/session';
+import { useVideoStore } from '@/stores/modules/video';
 
 const route = useRoute();
 const router = useRouter();
@@ -21,38 +22,32 @@ const conversationsList = computed(() => sessionStore.sessionList);
 const loadMoreLoading = computed(() => sessionStore.isLoadingMore);
 const active = ref<string | undefined>();
 
-const searchKeyword = computed({
-  get: () => sessionStore.searchKeyword,
-  set: (val) => {
-    handleSearch(val);
-  },
-});
+const searchKeyword = ref('');
+const imageSearchKeyword = ref('');
+const videoSearchKeyword = ref('');
 
-// 搜索防抖定时器
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
-// 搜索处理函数（带防抖）
-function handleSearch(keyword: string) {
-  if (searchTimer) {
+watch(searchKeyword, (val) => {
+  if (searchTimer)
     clearTimeout(searchTimer);
-  }
   searchTimer = setTimeout(() => {
-    if (keyword.trim()) {
-      sessionStore.searchSessions(keyword.trim());
-    }
-    else {
+    if (val.trim())
+      sessionStore.searchSessions(val.trim());
+    else
       sessionStore.clearSearch();
-    }
   }, 300);
-}
+});
 
-// 清除搜索
 function handleClearSearch() {
+  searchKeyword.value = '';
   sessionStore.clearSearch();
 }
 
 const imageStore = useImageStore();
+const videoStore = useVideoStore();
 const { records: imageRecords, currentSessionId } = storeToRefs(imageStore);
+const { records: videoRecords, currentSessionId: videoSessionId } = storeToRefs(videoStore);
 
 // 按 sessionId 分组，每组取最早一条作为代表（records 按 createTime 倒序，所以取最后一条）
 const imageSessions = computed(() => {
@@ -65,7 +60,26 @@ const imageSessions = computed(() => {
   return Array.from(map.values());
 });
 
+const videoSessions = computed(() => {
+  const map = new Map<string, typeof videoRecords.value[0]>();
+  for (const r of videoRecords.value) {
+    const key = r.sessionId || String(r.id);
+    map.set(key, r);
+  }
+  return Array.from(map.values());
+});
+
+const filteredImageSessions = computed(() => {
+  const kw = imageSearchKeyword.value.trim().toLowerCase();
+  return kw ? imageSessions.value.filter(r => r.prompt?.toLowerCase().includes(kw)) : imageSessions.value;
+});
+
+const filteredVideoSessions = computed(() => {
+  const kw = videoSearchKeyword.value.trim().toLowerCase();
+  return kw ? videoSessions.value.filter(r => r.prompt?.toLowerCase().includes(kw)) : videoSessions.value;
+});
 const isImageMode = computed(() => route.path.startsWith('/image'));
+const isVideoMode = computed(() => route.path.startsWith('/video'));
 
 onMounted(async () => {
   // 获取会话列表
@@ -213,28 +227,62 @@ function handleMenuCommand(command: string, item: ConversationItem<ChatSessionVo
         <div class="mode-switcher flex border-b mb-2 px-2 pt-2">
           <button
             class="flex-1 py-1.5 text-sm rounded-l"
-            :class="route.path.startsWith('/chat') ? 'bg-primary text-white' : 'bg-gray-100'"
+            :class="route.path.startsWith('/chat') || route.path === '/' ? 'bg-primary text-white' : 'bg-gray-100'"
             @click="handleCreatChat"
           >
             AI 对话
           </button>
           <button
-            class="flex-1 py-1.5 text-sm rounded-r"
+            class="flex-1 py-1.5 text-sm"
             :class="route.path === '/image' ? 'bg-primary text-white' : 'bg-gray-100'"
             @click="() => { imageStore.newSession(); router.push('/image') }"
           >
             AI 生图
           </button>
+          <button
+            class="flex-1 py-1.5 text-sm rounded-r"
+            :class="route.path === '/video' ? 'bg-primary text-white' : 'bg-gray-100'"
+            @click="() => { videoStore.newSession(); router.push('/video') }"
+          >
+            AI 视频
+          </button>
         </div>
 
         <!-- 搜索框 -->
-        <div v-if="!route.path.startsWith('/image')" class="search-wrapper">
+        <div class="search-wrapper">
           <el-input
+            v-if="!isImageMode && !isVideoMode"
             v-model="searchKeyword"
-            placeholder="搜索对话"
+            placeholder="搜索对话记录"
             clearable
             class="search-input"
             @clear="handleClearSearch"
+          >
+            <template #prefix>
+              <el-icon>
+                <Search />
+              </el-icon>
+            </template>
+          </el-input>
+          <el-input
+            v-if="isImageMode"
+            v-model="imageSearchKeyword"
+            placeholder="搜索生图记录"
+            clearable
+            class="search-input"
+          >
+            <template #prefix>
+              <el-icon>
+                <Search />
+              </el-icon>
+            </template>
+          </el-input>
+          <el-input
+            v-if="isVideoMode"
+            v-model="videoSearchKeyword"
+            placeholder="搜索视频记录"
+            clearable
+            class="search-input"
           >
             <template #prefix>
               <el-icon>
@@ -249,18 +297,18 @@ function handleMenuCommand(command: string, item: ConversationItem<ChatSessionVo
 
         <!-- 新建按钮 -->
         <div class="px-3 mb-2">
-          <el-button class="w-full" @click="isImageMode ? imageStore.newSession() : handleCreatChat()">
+          <el-button class="w-full" @click="isVideoMode ? videoStore.newSession() : isImageMode ? imageStore.newSession() : handleCreatChat()">
             <el-icon class="mr-1">
               <Plus />
             </el-icon>
-            {{ isImageMode ? '新建生图' : '新建对话' }}
+            {{ isVideoMode ? '新建视频' : isImageMode ? '新建生图' : '新建对话' }}
           </el-button>
         </div>
 
         <div v-if="isImageMode" class="aside-content">
-          <div v-if="imageSessions.length > 0" class="image-history-list overflow-y-auto">
+          <div v-if="filteredImageSessions.length > 0" class="image-history-list overflow-y-auto">
             <div
-              v-for="r in imageSessions"
+              v-for="r in filteredImageSessions"
               :key="r.sessionId || r.id"
               class="history-item px-3 py-2 mx-2 rounded-lg cursor-pointer"
               :class="currentSessionId === (r.sessionId || String(r.id)) ? 'history-item-active' : 'history-item-hover'"
@@ -277,7 +325,27 @@ function handleMenuCommand(command: string, item: ConversationItem<ChatSessionVo
           <el-empty v-else class="h-full flex-center" description="暂无生图记录" />
         </div>
 
-        <div v-if="!route.path.startsWith('/image')" class="aside-content">
+        <div v-if="isVideoMode" class="aside-content">
+          <div v-if="filteredVideoSessions.length > 0" class="image-history-list overflow-y-auto">
+            <div
+              v-for="r in filteredVideoSessions"
+              :key="r.sessionId || r.id"
+              class="history-item px-3 py-2 mx-2 rounded-lg cursor-pointer"
+              :class="videoSessionId === (r.sessionId || String(r.id)) ? 'history-item-active' : 'history-item-hover'"
+              @click="videoStore.setCurrentSession(r)"
+            >
+              <div class="text-xs text-gray-700 truncate">
+                {{ r.prompt }}
+              </div>
+              <div class="text-xs text-gray-400 mt-0.5">
+                {{ r.createTime?.slice(0, 10) }}
+              </div>
+            </div>
+          </div>
+          <el-empty v-else class="h-full flex-center" description="暂无视频记录" />
+        </div>
+
+        <div v-if="!route.path.startsWith('/image') && !route.path.startsWith('/video')" class="aside-content">
           <div v-if="conversationsList.length > 0" class="conversations-wrap overflow-hidden">
             <Conversations
               v-model:active="active"

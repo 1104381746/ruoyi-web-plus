@@ -1,27 +1,22 @@
-export interface GenerateImageBo {
+export interface GenerateVideoBo {
   modelId: number;
   sessionId?: string;
   prompt: string;
   size?: string;
+  duration?: number;
   seed?: number;
 }
 
-export interface ImageRecordVo {
+export interface VideoRecordVo {
   id: number;
   userId: number;
   modelId: number;
   sessionId: string;
   prompt: string;
   size: string;
+  duration: number;
   seed: number;
-  imageUrl: string;
+  videoUrl: string;
   status: number;
   createTime: string;
-}
-
-export interface PageResult<T> {
-  records: T[];
-  total: number;
-  current: number;
-  size: number;
 }

@@ -7,7 +7,6 @@ import { useDesignStore, useUserStore } from '@/stores';
 import { useSessionStore } from '@/stores/modules/session';
 import Avatar from './components/Avatar.vue';
 import Collapse from './components/Collapse.vue';
-import CreateChat from './components/CreateChat.vue';
 import LoginBtn from './components/LoginBtn.vue';
 import TitleEditing from './components/TitleEditing.vue';
 
@@ -59,7 +58,6 @@ onKeyStroke(event => event.ctrlKey && event.key.toLowerCase() === 'k', handleCtr
               class="left-box flex h-full items-center pl-20px gap-12px flex-shrink-0 flex-row"
             >
               <Collapse />
-              <CreateChat />
               <div v-if="currentSession" class="w-0.5px h-30px bg-[rgba(217,217,217)]" />
             </div>
 

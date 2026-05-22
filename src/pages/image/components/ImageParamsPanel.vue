@@ -25,7 +25,7 @@ onMounted(async () => {
     <div class="flex items-center gap-2">
       <span class="text-sm text-gray-600">模型</span>
       <el-select v-model="params.modelId" placeholder="选择模型" size="small" style="width: 160px">
-        <el-option v-for="m in imageModels" :key="m.id!" :label="m.modelName" :value="m.id!" />
+        <el-option v-for="m in imageModels" :key="m.id!" :label="m.modelDescribe || m.modelName" :value="m.id!" />
       </el-select>
     </div>
     <div class="flex items-center gap-2">

@@ -41,60 +41,65 @@ function download(url: string) {
 
 <template>
   <div class="image-container">
-    <div class="image-warp" :class="{ 'image-warp-empty': sessionRecords.length === 0 }">
-      <!-- 空状态提示 -->
-      <div v-if="sessionRecords.length === 0" class="empty-welcome">
-        <p class="text-2xl font-semibold text-gray-700">
-          AI 生图
-        </p>
-        <p class="text-sm text-gray-400 mt-2">
-          描述你想生成的图片，按下生成按钮开始创作
-        </p>
-      </div>
-      <!-- 消息列表 -->
-      <div v-if="sessionRecords.length > 0" class="message-list">
-        <template v-if="sessionRecords.length > 0">
-          <template v-for="record in sessionRecords" :key="record.id">
-            <div class="image-bubble image-bubble-user">
-              <div class="user-prompt-bubble">
-                {{ record.prompt }}
-              </div>
-              <el-avatar :size="32" :src="userInfo?.avatar" class="shrink-0">
-                <el-icon><User /></el-icon>
-              </el-avatar>
+    <div class="image-warp" :class="{ 'has-records': sessionRecords.length > 0 }">
+      <!-- 消息列表 / 空状态 -->
+      <div class="message-list">
+        <div v-if="sessionRecords.length === 0" class="empty-welcome">
+          <p class="text-2xl font-semibold text-gray-700">
+            AI 图片生成
+          </p>
+          <p class="text-sm text-gray-400 mt-2">
+            描述你想生成的图片，按下生成按钮开始创作
+          </p>
+        </div>
+        <template v-for="record in sessionRecords" :key="record.id">
+          <div class="image-bubble image-bubble-user">
+            <div class="user-prompt-bubble">
+              {{ record.prompt }}
             </div>
-            <div class="image-bubble image-bubble-ai">
-              <el-avatar :size="32" class="shrink-0 ai-avatar">
-                <el-icon><MagicStick /></el-icon>
-              </el-avatar>
-              <div class="ai-reply-bubble">
-                <template v-if="!record.imageUrl">
-                  <div class="generating-placeholder">
-                    <el-icon class="text-3xl animate-spin">
-                      <Loading />
-                    </el-icon>
-                    <span class="text-sm">图片生成中...</span>
-                  </div>
-                </template>
-                <template v-else>
-                  <img
-                    :src="record.imageUrl"
-                    class="rounded cursor-pointer"
-                    style="max-width: 512px; max-height: 512px; object-fit: contain;"
-                    @click="previewImage(record.imageUrl)"
-                  >
-                  <div class="flex gap-2 mt-2">
-                    <el-button size="small" @click="download(record.imageUrl)">
-                      下载
-                    </el-button>
-                    <el-button size="small" type="danger" @click="imageStore.remove(record.id)">
-                      删除
-                    </el-button>
-                  </div>
-                </template>
-              </div>
+            <el-avatar :size="32" :src="userInfo?.avatar" class="shrink-0">
+              <el-icon><User /></el-icon>
+            </el-avatar>
+          </div>
+          <div class="image-bubble image-bubble-ai">
+            <el-avatar :size="32" class="shrink-0 ai-avatar">
+              <el-icon><MagicStick /></el-icon>
+            </el-avatar>
+            <div class="ai-reply-bubble">
+              <template v-if="record.status === 2">
+                <div class="generating-placeholder">
+                  <el-icon class="text-2xl" color="#f56c6c">
+                    <CircleClose />
+                  </el-icon>
+                  <span class="text-sm text-red-400">生成失败，请重试</span>
+                </div>
+              </template>
+              <template v-else-if="!record.imageUrl">
+                <div class="generating-placeholder">
+                  <el-icon class="text-3xl animate-spin">
+                    <Loading />
+                  </el-icon>
+                  <span class="text-sm">图片生成中...</span>
+                </div>
+              </template>
+              <template v-else>
+                <img
+                  :src="record.imageUrl"
+                  class="rounded cursor-pointer"
+                  style="max-width: 512px; max-height: 512px; object-fit: contain;"
+                  @click="previewImage(record.imageUrl)"
+                >
+                <div class="flex gap-2 mt-2">
+                  <el-button size="small" @click="download(record.imageUrl)">
+                    下载
+                  </el-button>
+                  <el-button size="small" type="danger" @click="imageStore.remove(record.id)">
+                    删除
+                  </el-button>
+                </div>
+              </template>
             </div>
-          </template>
+          </div>
         </template>
       </div>
 
@@ -136,32 +141,31 @@ function download(url: string) {
 .image-warp {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
   width: 100%;
   max-width: 800px;
-  height: 100%;
+  min-height: 450px;
 
-  &.image-warp-empty {
-    justify-content: center;
-    gap: 24px;
+  &.has-records {
+    justify-content: space-between;
+    height: calc(100vh - 60px);
+    min-height: unset;
   }
 }
 
 .empty-welcome {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  padding-bottom: 8px;
-}
-
-.message-list:not(:empty) {
-  margin-bottom: 0;
 }
 
 .message-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  flex: 1;
-  min-height: 0;
+  max-height: calc(100vh - 240px);
   padding: 24px 0;
   overflow-y: auto;
 }

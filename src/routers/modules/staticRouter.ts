@@ -36,6 +36,11 @@ export const layoutRouter: RouteRecordRaw[] = [
         name: 'image',
         component: () => import('@/pages/image/index.vue'),
       },
+      {
+        path: '/video',
+        name: 'video',
+        component: () => import('@/pages/video/index.vue'),
+      },
     ],
   },
 ];
