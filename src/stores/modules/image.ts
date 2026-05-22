@@ -38,9 +38,9 @@ export const useImageStore = defineStore('image', () => {
     }
   }
 
-  async function fetchList(pageNum = 1, pageSize = 20) {
+  async function fetchList(pageNum = 1, pageSize = 20, keyword?: string) {
     try {
-      const res = await getImageList(pageNum, pageSize);
+      const res = await getImageList(pageNum, pageSize, keyword);
       records.value = res.data.records;
       total.value = res.data.total;
     }

@@ -28,34 +28,43 @@ const videoSearchKeyword = ref('');
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
-watch(searchKeyword, (val) => {
-  if (searchTimer)
-    clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => {
-    if (val.trim())
-      sessionStore.searchSessions(val.trim());
-    else
-      sessionStore.clearSearch();
-  }, 300);
-});
-
-function handleClearSearch() {
-  searchKeyword.value = '';
-  sessionStore.clearSearch();
+function debounce(fn: (val: string) => void) {
+  return (val: string) => {
+    if (searchTimer)
+      clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => fn(val), 300);
+  };
 }
+
+watch(searchKeyword, debounce((val) => {
+  if (val.trim())
+    sessionStore.searchSessions(val.trim());
+  else
+    sessionStore.clearSearch();
+}));
 
 const imageStore = useImageStore();
 const videoStore = useVideoStore();
 const { records: imageRecords, currentSessionId } = storeToRefs(imageStore);
 const { records: videoRecords, currentSessionId: videoSessionId } = storeToRefs(videoStore);
 
-// 按 sessionId 分组，每组取最早一条作为代表（records 按 createTime 倒序，所以取最后一条）
+watch(imageSearchKeyword, debounce((val) => {
+  imageStore.fetchList(1, 100, val.trim() || undefined);
+}));
+
+watch(videoSearchKeyword, debounce((val) => {
+  videoStore.fetchList(1, 100, val.trim() || undefined);
+}));
+
+function handleClearSearch() {
+  searchKeyword.value = '';
+  sessionStore.clearSearch();
+}
+
 const imageSessions = computed(() => {
   const map = new Map<string, typeof imageRecords.value[0]>();
-  // records 是倒序的，遍历时后面的是更早的，用后面的覆盖前面的得到最早一条
   for (const r of imageRecords.value) {
-    const key = r.sessionId || String(r.id);
-    map.set(key, r);
+    map.set(r.sessionId || String(r.id), r);
   }
   return Array.from(map.values());
 });
@@ -63,20 +72,9 @@ const imageSessions = computed(() => {
 const videoSessions = computed(() => {
   const map = new Map<string, typeof videoRecords.value[0]>();
   for (const r of videoRecords.value) {
-    const key = r.sessionId || String(r.id);
-    map.set(key, r);
+    map.set(r.sessionId || String(r.id), r);
   }
   return Array.from(map.values());
-});
-
-const filteredImageSessions = computed(() => {
-  const kw = imageSearchKeyword.value.trim().toLowerCase();
-  return kw ? imageSessions.value.filter(r => r.prompt?.toLowerCase().includes(kw)) : imageSessions.value;
-});
-
-const filteredVideoSessions = computed(() => {
-  const kw = videoSearchKeyword.value.trim().toLowerCase();
-  return kw ? videoSessions.value.filter(r => r.prompt?.toLowerCase().includes(kw)) : videoSessions.value;
 });
 const isImageMode = computed(() => route.path.startsWith('/image'));
 const isVideoMode = computed(() => route.path.startsWith('/video'));
@@ -306,9 +304,9 @@ function handleMenuCommand(command: string, item: ConversationItem<ChatSessionVo
         </div>
 
         <div v-if="isImageMode" class="aside-content">
-          <div v-if="filteredImageSessions.length > 0" class="image-history-list overflow-y-auto">
+          <div v-if="imageSessions.length > 0" class="image-history-list overflow-y-auto">
             <div
-              v-for="r in filteredImageSessions"
+              v-for="r in imageSessions"
               :key="r.sessionId || r.id"
               class="history-item px-3 py-2 mx-2 rounded-lg cursor-pointer"
               :class="currentSessionId === (r.sessionId || String(r.id)) ? 'history-item-active' : 'history-item-hover'"
@@ -326,9 +324,9 @@ function handleMenuCommand(command: string, item: ConversationItem<ChatSessionVo
         </div>
 
         <div v-if="isVideoMode" class="aside-content">
-          <div v-if="filteredVideoSessions.length > 0" class="image-history-list overflow-y-auto">
+          <div v-if="videoSessions.length > 0" class="image-history-list overflow-y-auto">
             <div
-              v-for="r in filteredVideoSessions"
+              v-for="r in videoSessions"
               :key="r.sessionId || r.id"
               class="history-item px-3 py-2 mx-2 rounded-lg cursor-pointer"
               :class="videoSessionId === (r.sessionId || String(r.id)) ? 'history-item-active' : 'history-item-hover'"

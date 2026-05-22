@@ -48,9 +48,9 @@ export const useVideoStore = defineStore('video', () => {
     }
   }
 
-  async function fetchList(pageNum = 1, pageSize = 20) {
+  async function fetchList(pageNum = 1, pageSize = 20, keyword?: string) {
     try {
-      const res = await getVideoList(pageNum, pageSize);
+      const res = await getVideoList(pageNum, pageSize, keyword);
       records.value = res.data.records;
       total.value = res.data.total;
     }

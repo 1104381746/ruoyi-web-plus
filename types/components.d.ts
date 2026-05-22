@@ -9,6 +9,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AccountPassword: typeof import('./../src/components/LoginDialog/components/FormLogin/AccountPassword.vue')['default']
+    BaseParamsPanel: typeof import('./../src/components/BaseParamsPanel/index.vue')['default']
     ChatSender: typeof import('./../src/components/ChatSender/index.vue')['default']
     DeepThinking: typeof import('./../src/components/DeepThinking/index.vue')['default']
     EchartsRenderer: typeof import('./../src/components/EchartsRenderer/index.vue')['default']
@@ -37,6 +38,7 @@ declare module 'vue' {
     FilesSelect: typeof import('./../src/components/FilesSelect/index.vue')['default']
     IconSelect: typeof import('./../src/components/IconSelect/index.vue')['default']
     LoginDialog: typeof import('./../src/components/LoginDialog/index.vue')['default']
+    MediaBubbleRow: typeof import('./../src/components/MediaBubbleRow/index.vue')['default']
     ModelSelect: typeof import('./../src/components/ModelSelect/index.vue')['default']
     Popover: typeof import('./../src/components/Popover/index.vue')['default']
     QrCodeLogin: typeof import('./../src/components/LoginDialog/components/QrCodeLogin/index.vue')['default']
