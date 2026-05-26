@@ -141,7 +141,7 @@ const formattedResult = computed(() => {
 
 <style scoped lang="scss">
 .tool-call-card {
-  background-color: #ffffff;
+  background-color: var(--el-bg-color);
   border: 1px solid #e4e7ed;
   border-radius: 8px;
   overflow: hidden;

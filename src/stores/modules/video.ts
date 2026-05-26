@@ -1,6 +1,7 @@
 import type { GenerateVideoBo, VideoRecordVo } from '@/api/video/types';
 import { defineStore } from 'pinia';
-import { deleteVideo, generateVideo, getVideoList } from '@/api/video';
+import { cancelVideo, deleteVideo, generateVideo, getVideoList } from '@/api/video';
+import { useSessionStore } from './session';
 
 export const useVideoStore = defineStore('video', () => {
   const records = ref<VideoRecordVo[]>([]);
@@ -8,32 +9,36 @@ export const useVideoStore = defineStore('video', () => {
   const loading = ref(false);
   const sessionRecords = ref<VideoRecordVo[]>([]);
   const currentSessionId = ref<string | null>(null);
-
-  function newSessionId() {
-    return `vid-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  }
+  const cancelled = ref(false);
 
   async function generate(bo: GenerateVideoBo) {
     if (!currentSessionId.value) {
-      currentSessionId.value = newSessionId();
+      const sessionStore = useSessionStore();
+      const session = await sessionStore.createTypedSession(bo.content, 'video');
+      currentSessionId.value = String(session.id!);
     }
+    cancelled.value = false;
     loading.value = true;
     const placeholder = {
       id: -Date.now(),
-      prompt: bo.prompt,
+      content: bo.content,
+      role: 'user',
+      totalTokens: 0,
       videoUrl: '',
       userId: 0,
-      modelId: bo.modelId,
+      modelName: bo.modelName,
       sessionId: currentSessionId.value,
       size: bo.size ?? '',
       duration: bo.duration ?? 0,
       seed: bo.seed ?? 0,
       status: 0,
+      referenceImageUrl: bo.referenceImageUrl,
       createTime: '',
     } as VideoRecordVo;
     sessionRecords.value.push(placeholder);
     try {
       const res = await generateVideo({ ...bo, sessionId: currentSessionId.value });
+      if (cancelled.value) return;
       const idx = sessionRecords.value.findIndex(r => r.id === placeholder.id);
       if (idx !== -1)
         sessionRecords.value.splice(idx, 1, res.data);
@@ -41,6 +46,7 @@ export const useVideoStore = defineStore('video', () => {
       total.value++;
     }
     catch {
+      if (cancelled.value) return;
       sessionRecords.value = sessionRecords.value.filter(r => r.id !== placeholder.id);
     }
     finally {
@@ -48,13 +54,33 @@ export const useVideoStore = defineStore('video', () => {
     }
   }
 
+  function cancel() {
+    cancelled.value = true;
+    loading.value = false;
+    for (const r of sessionRecords.value) {
+      if (!r.videoUrl) r.status = 3;
+    }
+    if (currentSessionId.value) {
+      cancelVideo(currentSessionId.value).catch(() => {});
+    }
+  }
+
   async function fetchList(pageNum = 1, pageSize = 20, keyword?: string) {
     try {
-      const res = await getVideoList(pageNum, pageSize, keyword);
+      const sessionId = currentSessionId.value || undefined;
+      console.log('[videoStore] fetchList called:', { pageNum, pageSize, keyword, sessionId, currentSessionId: currentSessionId.value });
+      const res = await getVideoList(pageNum, pageSize, keyword, sessionId);
+      console.log('[videoStore] fetchList response:', { dataKeys: Object.keys(res), recordsCount: res.data?.records?.length, total: res.data?.total });
       records.value = res.data.records;
       total.value = res.data.total;
+      if (sessionId) {
+        sessionRecords.value = [...records.value].reverse();
+      }
+      console.log('[videoStore] fetchList done:', { recordsCount: records.value.length, sessionRecordsCount: sessionRecords.value.length });
     }
-    catch {}
+    catch (e) {
+      console.error('[videoStore] fetchList error:', e);
+    }
   }
 
   async function remove(id: number) {
@@ -69,7 +95,12 @@ export const useVideoStore = defineStore('video', () => {
 
   function setCurrentSession(record: VideoRecordVo) {
     currentSessionId.value = record.sessionId;
-    sessionRecords.value = records.value.filter(r => r.sessionId === record.sessionId);
+    sessionRecords.value = records.value.filter(r => String(r.sessionId) === String(record.sessionId)).reverse();
+  }
+
+  function selectSession(sessionId: string) {
+    currentSessionId.value = String(sessionId);
+    sessionRecords.value = records.value.filter(r => String(r.sessionId) === String(sessionId)).reverse();
   }
 
   function newSession() {
@@ -77,5 +108,5 @@ export const useVideoStore = defineStore('video', () => {
     sessionRecords.value = [];
   }
 
-  return { records, total, loading, sessionRecords, currentSessionId, generate, fetchList, remove, setCurrentSession, newSession };
+  return { records, total, loading, cancelled, sessionRecords, currentSessionId, generate, cancel, fetchList, remove, setCurrentSession, selectSession, newSession };
 });

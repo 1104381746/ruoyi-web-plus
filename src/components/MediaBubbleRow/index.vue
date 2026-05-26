@@ -3,12 +3,13 @@ import { storeToRefs } from 'pinia';
 import { useUserStore } from '@/stores/modules/user';
 
 defineProps<{
-  prompt: string;
+  content: string;
   status: number;
   mediaUrl?: string;
   type: 'image' | 'video';
   size?: string;
   duration?: number;
+  referenceImageUrl?: string;
 }>();
 
 const emit = defineEmits<{
@@ -24,7 +25,8 @@ const { userInfo } = storeToRefs(useUserStore());
   <!-- 用户气泡 -->
   <div class="bubble-row bubble-row--user">
     <div class="bubble bubble--user">
-      {{ prompt }}
+      <img v-if="referenceImageUrl" :src="referenceImageUrl" class="ref-img">
+      {{ content }}
     </div>
     <el-avatar :size="36" :src="userInfo?.avatar" class="flex-shrink-0">
       <el-icon><User /></el-icon>
@@ -37,8 +39,17 @@ const { userInfo } = storeToRefs(useUserStore());
       {{ type === 'image' ? '🎨' : '🎬' }}
     </div>
     <div class="bubble bubble--ai">
+      <!-- 已取消 -->
+      <template v-if="status === 3">
+        <div class="media-status media-status--cancelled">
+          <el-icon color="#909399">
+            <CircleClose />
+          </el-icon>
+          <span>已取消</span>
+        </div>
+      </template>
       <!-- 失败 -->
-      <template v-if="status === 2">
+      <template v-else-if="status === 2">
         <div class="media-status media-status--error">
           <el-icon color="#f56c6c">
             <CircleClose />
@@ -98,14 +109,14 @@ const { userInfo } = storeToRefs(useUserStore());
   line-height: 1.6;
 
   &--user {
-    background: #e8f4ff;
-    color: #1a1a1a;
+    background: var(--chat-bubble-user-bg);
+    color: var(--chat-bubble-user-color);
     border-bottom-right-radius: 4px;
   }
 
   &--ai {
-    background: #fff;
-    box-shadow: 0 1px 4px rgb(0 0 0 / 8%);
+    background: var(--el-bg-color);
+    box-shadow: var(--media-bubble-shadow);
     border-bottom-left-radius: 4px;
     padding: 16px;
   }
@@ -119,13 +130,14 @@ const { userInfo } = storeToRefs(useUserStore());
   min-width: 280px;
 
   &--error { color: #f56c6c; }
+  &--cancelled { color: #909399; }
   &--loading { color: #6b7280; padding: 8px 0; }
 }
 
 .spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--scrollbar-thumb-bg);
   border-top-color: #667eea;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -133,6 +145,15 @@ const { userInfo } = storeToRefs(useUserStore());
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.ref-img {
+  display: block;
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  object-fit: contain;
+}
 
 .media-actions {
   display: flex;

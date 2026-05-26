@@ -2,15 +2,15 @@
 import { storeToRefs } from 'pinia';
 import { useImageStore } from '@/stores/modules/image';
 
-const props = defineProps<{ modelId: number; size: string; seed?: number }>();
+const props = defineProps<{ modelName: string; size: string; seed?: number }>();
 const imageStore = useImageStore();
 const { loading } = storeToRefs(imageStore);
 const prompt = ref('');
 
 async function submit() {
-  if (!prompt.value.trim() || !props.modelId)
+  if (!prompt.value.trim() || !props.modelName)
     return;
-  await imageStore.generate({ modelId: props.modelId, prompt: prompt.value, size: props.size, seed: props.seed });
+  await imageStore.generate({ modelName: props.modelName, content: prompt.value, size: props.size, seed: props.seed });
   prompt.value = '';
 }
 </script>

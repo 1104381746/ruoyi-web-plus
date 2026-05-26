@@ -153,21 +153,21 @@ function handleUploadFiles() {
   height: 32px;
   cursor: pointer;
   user-select: none;
-  background-color: #fff;
-  border: 1px solid rgb(0 0 0 / 10%);
+  background-color: var(--el-bg-color);
+  border: 1px solid var(--action-btn-border);
   border-radius: 50%;
   transition: all 0.2s ease;
 
   &:hover {
-    background-color: rgb(0 0 0 / 4%);
-    border-color: rgb(0 0 0 / 15%);
+    background-color: var(--action-btn-hover-bg);
+    border-color: var(--el-border-color);
   }
 
   .files-icon {
     width: 14px;
     height: 14px;
     font-size: 14px;
-    color: rgb(0 0 0 / 65%);
+    color: var(--btn-icon-color);
   }
 }
 </style>

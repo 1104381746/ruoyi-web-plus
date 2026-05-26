@@ -10,6 +10,7 @@ import { useHookFetch } from 'hook-fetch/vue';
 import { nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { send } from '@/api';
+import AiIcon from '@/components/AiIcon.vue';
 import ChatSender from '@/components/ChatSender/index.vue';
 import { useChatStore } from '@/stores/modules/chat';
 import { useModelStore } from '@/stores/modules/model';
@@ -25,6 +26,7 @@ type MessageItem = BubbleProps & {
   thinkingStatus?: ThinkingStatus;
   thinlCollapse?: boolean;
   reasoning_content?: string;
+  createTime?: string;
   class?: string;
 };
 
@@ -440,6 +442,7 @@ function addMessage(message: string, isUser: boolean) {
     isMarkdown: !isUser,
     loading: !isUser,
     content: message || '',
+    createTime: new Date().toISOString(),
     reasoning_content: '',
     thinkingStatus: 'start',
     thinlCollapse: false,
@@ -497,6 +500,11 @@ function handleCreateNewChat() {
       </Transition>
 
       <BubbleList ref="bubbleListRef" :list="bubbleItems" max-height="calc(100vh - 240px)">
+        <template #avatar="{ item }">
+          <AiIcon v-if="item.role !== 'user'" class="ai-avatar-icon" />
+          <el-avatar v-else :src="item.avatar" :size="32" />
+        </template>
+
         <template #header="{ item }">
           <Thinking
             v-if="item.reasoning_content"
@@ -517,11 +525,17 @@ function handleCreateNewChat() {
             :themes="{ light: 'github-light', dark: 'github-dark' }"
             default-theme-mode="dark"
           />
+          <div v-if="item.createTime && item.role === 'system' && item.content" class="msg-time msg-time--ai">
+            {{ item.createTime?.slice(0, 16).replace('T', ' ') }}
+          </div>
           <div v-if="item.content && item.role === 'user'" class="userContent">
             <div class="user-bubble" :class="{ editing: editingMessageKeys.includes(item.key) }">
               <template v-if="!editingMessageKeys.includes(item.key)">
                 <div class="user-content">
                   {{ item.content }}
+                </div>
+                <div v-if="item.createTime" class="msg-time">
+                  {{ item.createTime?.slice(0, 16).replace('T', ' ') }}
                 </div>
               </template>
 
@@ -584,6 +598,15 @@ function handleCreateNewChat() {
 </template>
 
 <style scoped lang="scss">
+.ai-avatar-icon {
+  width: 32px;
+  height: 32px;
+  padding: 4px;
+  color: #fff;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 50%;
+}
+
 .user-bubble.editing {
   background: transparent !important;
   padding: 0;
@@ -604,10 +627,10 @@ function handleCreateNewChat() {
 .edit-card {
   width: 500px;
   box-sizing: border-box;
-  border: 1px solid #dcdfe6;
+  border: 1px solid var(--edit-card-border);
   border-radius: 16px;
   padding: 12px;
-  background: #ffffff;
+  background: var(--el-bg-color);
   transition: all 0.2s ease;
 }
 
@@ -645,7 +668,7 @@ function handleCreateNewChat() {
     cursor: pointer;
     pointer-events: auto;
     border: none !important;
-    color: #91949a;
+    color: var(--copy-btn-color);
     :deep(svg) {
       stroke-width: 3 !important;
     }
@@ -653,7 +676,7 @@ function handleCreateNewChat() {
     &:hover {
       border-radius: 50%;
       transition: background-color 0.2s;
-      background-color: #f1efef;
+      background-color: var(--copy-btn-hover-bg);
     }
   }
 }
@@ -666,6 +689,13 @@ function handleCreateNewChat() {
   width: 100%;
   max-width: 800px;
   height: 100%;
+
+  .msg-time {
+    font-size: 11px;
+    color: var(--msg-time-color);
+    margin-top: 4px;
+    &--ai { margin-left: 4px; }
+  }
 
   .chat-warp {
     display: flex;
@@ -709,14 +739,14 @@ function handleCreateNewChat() {
         padding: 6px 12px;
         cursor: pointer;
         user-select: none;
-        background-color: #ffffff;
-        border: 1px solid rgb(0 0 0 / 10%);
+        background-color: var(--el-bg-color);
+        border: 1px solid var(--action-btn-border);
         border-radius: 16px;
         box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
         transition: all 0.2s ease;
 
         &:hover {
-          background-color: rgb(0 87 255 / 4%);
+          background-color: var(--new-chat-btn-hover-bg);
           border-color: rgb(0 87 255 / 20%);
           box-shadow: 0 2px 4px rgb(0 87 255 / 10%);
           .btn-icon {
@@ -728,14 +758,14 @@ function handleCreateNewChat() {
           width: 16px;
           height: 16px;
           font-size: 16px;
-          color: rgb(0 0 0 / 65%);
+          color: var(--btn-icon-color);
           transition: color 0.2s ease;
         }
 
         .btn-text {
           font-size: 13px;
           font-weight: 500;
-          color: rgb(0 0 0 / 85%);
+          color: var(--el-text-color-primary);
         }
       }
     }

@@ -8,8 +8,6 @@ import { useSessionStore } from '@/stores/modules/session';
 import Avatar from './components/Avatar.vue';
 import Collapse from './components/Collapse.vue';
 import LoginBtn from './components/LoginBtn.vue';
-import TitleEditing from './components/TitleEditing.vue';
-
 const route = useRoute();
 
 const userStore = useUserStore();
@@ -66,7 +64,12 @@ onKeyStroke(event => event.ctrlKey && event.key.toLowerCase() === 'k', handleCtr
               <template v-if="route.path === '/image'">
                 <span class="text-base font-medium">AI 生图</span>
               </template>
-              <TitleEditing v-else />
+              <template v-else-if="route.path === '/video'">
+                <span class="text-base font-medium">AI 视频</span>
+              </template>
+              <template v-else>
+                <span class="text-base font-medium">AI 对话</span>
+              </template>
             </div>
           </div>
         </div>

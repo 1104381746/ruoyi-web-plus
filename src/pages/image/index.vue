@@ -5,15 +5,25 @@ import { useImageStore } from '@/stores/modules/image';
 import ImageParamsPanel from './components/ImageParamsPanel.vue';
 
 const imageStore = useImageStore();
-const { sessionRecords, loading } = storeToRefs(imageStore);
+const { sessionRecords, loading, currentSessionId, cancelled } = storeToRefs(imageStore);
 
-const params = ref({ modelId: 0, size: '1024x1024', seed: undefined as number | undefined });
-const prompt = ref('');
+const params = ref({ modelName: '', size: '1024x1024', seed: undefined as number | undefined, referenceImageUrl: undefined as string | undefined });
+const content = ref('');
 const messageList = ref<HTMLElement | null>(null);
 const previewUrl = ref('');
 const showPreview = ref(false);
 
-onMounted(() => imageStore.fetchList(1, 100));
+onMounted(async () => {
+  await imageStore.fetchList(1, 100);
+  if (imageStore.currentSessionId) {
+    imageStore.selectSession(imageStore.currentSessionId);
+  }
+});
+
+watch(currentSessionId, () => {
+  params.value.referenceImageUrl = undefined;
+  content.value = '';
+});
 
 watch(sessionRecords, () => {
   nextTick(() => {
@@ -23,10 +33,16 @@ watch(sessionRecords, () => {
 }, { deep: true });
 
 async function submit() {
-  if (!prompt.value.trim() || !params.value.modelId)
+  if (!content.value.trim() || !params.value.modelName)
     return;
-  await imageStore.generate({ modelId: params.value.modelId, prompt: prompt.value, size: params.value.size, seed: params.value.seed });
-  prompt.value = '';
+  await imageStore.generate({ modelName: params.value.modelName, content: content.value, size: params.value.size, seed: params.value.seed, referenceImageUrl: params.value.referenceImageUrl });
+  if (cancelled.value) return;
+  content.value = '';
+  params.value.referenceImageUrl = undefined;
+}
+
+function handleCancel() {
+  imageStore.cancel();
 }
 
 function download(url: string) {
@@ -42,10 +58,10 @@ function download(url: string) {
     <div class="media-wrap" :class="{ 'has-records': sessionRecords.length > 0 }">
       <div ref="messageList" class="message-list">
         <div v-if="sessionRecords.length === 0" class="empty-state">
-          <p class="text-2xl font-semibold text-gray-700">
+          <p class="text-2xl font-semibold" style="color: var(--el-text-color-primary)">
             AI 图片生成
           </p>
-          <p class="text-sm text-gray-400 mt-2">
+          <p class="text-sm mt-2" style="color: var(--el-text-color-secondary)">
             描述你想生成的图片，按下生成按钮开始创作
           </p>
         </div>
@@ -53,9 +69,10 @@ function download(url: string) {
           <MediaBubbleRow
             v-for="record in sessionRecords"
             :key="record.id"
-            :prompt="record.prompt"
+            :content="record.content"
             :status="record.status ?? 0"
             :media-url="record.imageUrl"
+            :reference-image-url="record.referenceImageUrl"
             type="image"
             @download="download"
             @remove="imageStore.remove(record.id)"
@@ -72,16 +89,19 @@ function download(url: string) {
         </template>
       </div>
       <div class="sender-box">
-        <ImageParamsPanel v-model="params" />
+        <ImageParamsPanel v-model="params" :key="currentSessionId ?? undefined" />
         <div class="input-row">
           <el-input
-            v-model="prompt"
+            v-model="content"
             type="textarea"
             :autosize="{ minRows: 2, maxRows: 4 }"
             placeholder="描述你想生成的图片..."
             class="flex-1"
           />
-          <el-button type="primary" :loading="loading" :disabled="!prompt.trim() || !params.modelId" class="send-btn" @click="submit">
+          <el-button v-if="loading" type="danger" class="send-btn" @click="handleCancel">
+            取消
+          </el-button>
+          <el-button v-else type="primary" :disabled="!content.trim() || !params.modelName" class="send-btn" @click="submit">
             生成
           </el-button>
         </div>
@@ -136,14 +156,14 @@ function download(url: string) {
   overflow-y: auto;
 
   &::-webkit-scrollbar { width: 4px; }
-  &::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 2px; }
+  &::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb-bg); border-radius: 2px; }
 }
 
 .sender-box {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--el-border-color-lighter);
   border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 2px 12px rgb(0 0 0 / 6%);
+  background: var(--el-bg-color);
+  box-shadow: var(--media-sender-shadow);
   overflow: hidden;
   flex-shrink: 0;
 }

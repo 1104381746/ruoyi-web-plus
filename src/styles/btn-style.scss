@@ -9,25 +9,22 @@
   border-radius: 30%;
   transition: all 0.3s ease;
 
-  // 鼠标移入
   &:hover {
-    background-color: rgb(0 0 0 / 5%);
+    background-color: var(--btn-icon-hover-bg);
     .svg-icon {
-      color: rgb(0 0 0 / 60%);
+      color: var(--el-text-color-regular);
     }
   }
 
-  // 鼠标按下
   &:active {
-    background-color: rgb(0 0 0 / 8%);
+    background-color: var(--btn-icon-active-bg);
     .svg-icon {
-      color: rgb(0 0 0 / 70%);
+      color: var(--el-text-color-primary);
     }
   }
 
-  // 图标
   .svg-icon {
-    color: rgb(0 0 0 / 50%);
+    color: var(--btn-icon-color);
     user-select: none;
   }
 }

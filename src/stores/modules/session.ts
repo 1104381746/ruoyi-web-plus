@@ -1,5 +1,5 @@
 import type { ChatSessionVo, CreateSessionDTO, GetSessionListParams } from '@/api/session/types';
-import { ChatLineRound } from '@element-plus/icons-vue';
+import AiIcon from '@/components/AiIcon.vue';
 import { defineStore } from 'pinia';
 import { markRaw } from 'vue';
 import { useRouter } from 'vue-router';
@@ -34,6 +34,7 @@ export const useSessionStore = defineStore('session', () => {
   // 搜索相关状态
   const searchKeyword = ref(''); // 搜索关键词
   const isSearching = ref(false); // 是否正在搜索
+  const sessionType = ref<string>('chat'); // 当前会话类型筛选 (chat, image, video)
 
   // 创建新对话（按钮点击）
   const createSessionBtn = async () => {
@@ -77,9 +78,12 @@ export const useSessionStore = defineStore('session', () => {
         orderByColumn: 'createTime',
         // 搜索关键词
         sessionTitle: searchKeyword.value || undefined,
+        // 会话类型筛选
+        type: sessionType.value || undefined,
       };
 
       const resArr = await get_session_list(params);
+      console.log('[requestSessionList] API返回:', { rows: resArr.rows?.length, total: (resArr as any).total, type: params.type });
 
       // 预处理会话分组 并添加前缀图标
       const res = processSessions(resArr.rows);
@@ -236,17 +240,57 @@ export const useSessionStore = defineStore('session', () => {
       await requestSessionList(currentPage.value, true);
     }
   };
+  function getTimeGroup(createTime?: string | Date): string {
+    if (!createTime) return '更早';
+    let d: Date;
+    if (createTime instanceof Date) {
+      d = createTime;
+    } else {
+      const s = String(createTime);
+      if (/^\d+$/.test(s)) {
+        d = new Date(Number(s));
+      } else {
+        d = new Date(s.replace(' ', 'T'));
+      }
+    }
+    if (isNaN(d.getTime())) return '更早';
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterdayStart = new Date(todayStart.getTime() - 86400000);
+    const weekStart = new Date(todayStart.getTime() - todayStart.getDay() * 86400000);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    if (d >= todayStart) return '今天';
+    if (d >= yesterdayStart) return '昨天';
+    if (d >= weekStart) return '本周';
+    if (d >= monthStart) return '本月';
+    return '更早';
+  }
+
 
   // 在获取会话列表后添加预处理逻辑（示例）
   function processSessions(sessions: ChatSessionVo[]) {
     return sessions.map((session) => {
       return {
         ...session,
-        group: '最近对话', // 统一分组为"最近对话"
-        prefixIcon: markRaw(ChatLineRound), // 图标为静态组件，使用 markRaw 标记为静态组件
+        group: getTimeGroup(session.createTime),
+        prefixIcon: markRaw(AiIcon),
       };
     });
   }
+
+  // 创建生图/视频会话
+  const createTypedSession = async (content: string, type: string) => {
+    const data: CreateSessionDTO = {
+      userId: userStore.userInfo?.userId as number,
+      sessionTitle: content.length > 50 ? content.slice(0, 50) : content,
+      sessionContent: content,
+      type,
+    };
+    const res = await create_session(data);
+    const newSession = await get_session(`${res.data}`);
+    setCurrentSession(newSession.data);
+    return newSession.data;
+  };
 
   return {
     // 当前选中的会话
@@ -263,9 +307,11 @@ export const useSessionStore = defineStore('session', () => {
     // 搜索状态
     searchKeyword,
     isSearching,
+    sessionType,
     // 列表方法
     createSessionBtn,
     createSessionList,
+    createTypedSession,
     requestSessionList,
     loadMoreSessions,
     updateSession,

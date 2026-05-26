@@ -1,22 +1,26 @@
 export interface GenerateVideoBo {
-  modelId: number;
+  modelName: string;
   sessionId?: string;
-  prompt: string;
+  content: string;
   size?: string;
   duration?: number;
   seed?: number;
+  referenceImageUrl?: string;
 }
 
 export interface VideoRecordVo {
   id: number;
   userId: number;
-  modelId: number;
+  modelName: string;
   sessionId: string;
-  prompt: string;
+  content: string;
+  role: string;
+  totalTokens: number;
   size: string;
   duration: number;
   seed: number;
   videoUrl: string;
+  referenceImageUrl?: string;
   status: number;
   createTime: string;
 }

@@ -36,7 +36,7 @@ function download(url: string) {
           <!-- 用户消息：右侧 -->
           <div class="flex justify-end items-start gap-2">
             <div class="bg-green-100 rounded-lg p-3 max-w-2xl text-sm">
-              {{ record.prompt }}
+              {{ record.content }}
             </div>
             <el-avatar :size="32" :src="userInfo?.avatar" class="shrink-0 mt-0.5">
               <el-icon><User /></el-icon>

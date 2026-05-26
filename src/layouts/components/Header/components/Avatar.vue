@@ -1,10 +1,12 @@
 <!-- 头像 -->
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
 import Popover from '@/components/Popover/index.vue';
 import SvgIcon from '@/components/SvgIcon/index.vue';
 import { useUserStore } from '@/stores';
 import { useSessionStore } from '@/stores/modules/session';
 
+const router = useRouter();
 const userStore = useUserStore();
 const sessionStore = useSessionStore();
 const src = computed(
@@ -23,20 +25,15 @@ const popoverRef = ref();
 const popoverList = ref([
   {
     key: '1',
-    title: '收藏夹',
-    icon: 'book-mark-fill',
-  },
-  {
-    key: '2',
     title: '设置',
     icon: 'settings-4-fill',
   },
   {
-    key: '3',
+    key: '2',
     divider: true,
   },
   {
-    key: '4',
+    key: '3',
     title: '退出登录',
     icon: 'logout-box-r-line',
   },
@@ -46,14 +43,10 @@ const popoverList = ref([
 function handleClick(item: any) {
   switch (item.key) {
     case '1':
-      ElMessage.warning('暂未开放');
-      console.log('点击了收藏夹');
+      popoverRef.value?.hide?.();
+      router.push('/settings');
       break;
-    case '2':
-      ElMessage.warning('暂未开放');
-      console.log('点击了设置');
-      break;
-    case '4':
+    case '3':
       popoverRef.value?.hide?.();
       ElMessageBox.confirm('退出登录不会丢失任何数据，你仍可以登录此账号。', '确认退出登录？', {
         confirmButtonText: '确认退出',
@@ -132,8 +125,8 @@ function handleClick(item: any) {
 }
 .popover-content-box {
   padding: 8px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
   border-radius: 8px;
   box-shadow: 0 4px 16px rgb(0 0 0 / 8%);
 }

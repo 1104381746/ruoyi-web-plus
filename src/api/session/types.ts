@@ -50,6 +50,10 @@ export interface GetSessionListParams {
    */
   sessionTitle?: string;
   /**
+   * 会话类型: chat/image/video
+   */
+  type?: string;
+  /**
    * 更新者
    */
   updateBy?: number;
@@ -93,6 +97,10 @@ export interface ChatSessionVo {
    */
   createTime?: Date;
   /**
+   * 会话类型: chat/image/video
+   */
+  type?: string;
+  /**
    * 自定义的消息前缀图标字段
    */
   prefixIcon?: Component;
@@ -135,6 +143,10 @@ export interface CreateSessionDTO {
    * 会话标题
    */
   sessionTitle: string;
+  /**
+   * 会话类型: chat/image/video
+   */
+  type?: string;
   /**
    * 更新者
    */

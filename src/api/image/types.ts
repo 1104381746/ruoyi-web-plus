@@ -1,20 +1,24 @@
 export interface GenerateImageBo {
-  modelId: number;
+  modelName: string;
   sessionId?: string;
-  prompt: string;
+  content: string;
   size?: string;
   seed?: number;
+  referenceImageUrl?: string;
 }
 
 export interface ImageRecordVo {
   id: number;
   userId: number;
-  modelId: number;
+  modelName: string;
   sessionId: string;
-  prompt: string;
+  content: string;
+  role: string;
+  totalTokens: number;
   size: string;
   seed: number;
   imageUrl: string;
+  referenceImageUrl?: string;
   status: number;
   createTime: string;
 }

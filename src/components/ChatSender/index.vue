@@ -178,7 +178,7 @@ defineExpose({
           <template #prev-button="{ show, onScrollLeft }">
             <div
               v-if="show"
-              class="prev-next-btn left-8px flex-center w-22px h-22px rounded-8px border-1px border-solid border-[rgba(0,0,0,0.08)] c-[rgba(0,0,0,.4)] hover:bg-#f3f4f6 bg-#fff font-size-10px"
+              class="prev-next-btn left-8px flex-center w-22px h-22px rounded-8px font-size-10px"
               @click="onScrollLeft"
             >
               <el-icon>
@@ -190,7 +190,7 @@ defineExpose({
           <template #next-button="{ show, onScrollRight }">
             <div
               v-if="show"
-              class="prev-next-btn right-8px flex-center w-22px h-22px rounded-8px border-1px border-solid border-[rgba(0,0,0,0.08)] c-[rgba(0,0,0,.4)] hover:bg-#f3f4f6 bg-#fff font-size-10px"
+              class="prev-next-btn right-8px flex-center w-22px h-22px rounded-8px font-size-10px"
               @click="onScrollRight"
             >
               <el-icon>
@@ -308,18 +308,18 @@ defineExpose({
   padding: 10px;
   cursor: pointer;
   user-select: none;
-  background-color: #fff;
-  border: 1px solid rgb(0 0 0 / 10%);
+  background-color: var(--el-bg-color);
+  border: 1px solid var(--action-btn-border);
   border-radius: 10px;
   font-size: 12px;
   font-weight: 500;
-  color: rgb(0 0 0 / 85%);
+  color: var(--action-btn-color);
   transition: all 0.2s ease;
   white-space: nowrap;
 
   &:hover {
-    background-color: rgb(0 0 0 / 4%);
-    border-color: rgb(0 0 0 / 15%);
+    background-color: var(--action-btn-hover-bg);
+    border-color: var(--el-border-color);
   }
 
   // 选中状态
@@ -358,8 +358,8 @@ defineExpose({
   padding: 12px 16px 8px;
   font-size: 14px;
   font-weight: 600;
-  color: #303133;
-  border-bottom: 1px solid #ebeef5;
+  color: var(--el-text-color-primary);
+  border-bottom: 1px solid var(--el-border-color-lighter);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -390,32 +390,32 @@ defineExpose({
     position: relative;
 
     &:hover {
-      background-color: #f5f7fa;
+      background-color: var(--el-fill-color-light);
 
       .item-name {
-        color: #409eff;
+        color: var(--el-color-primary);
 
         :deep(.el-icon) {
-          color: #409eff;
+          color: var(--el-color-primary);
         }
       }
     }
 
     &.is-selected {
-      background-color: #f0f9ff;
+      background-color: var(--el-color-primary-light-9);
       border-left: 3px solid;
       padding-left: 9px;
 
       .item-name {
-        color: #0057ff;
+        color: var(--el-color-primary);
         font-weight: 500;
 
         :deep(.el-icon) {
-          color: #0057ff;
+          color: var(--el-color-primary);
         }
 
         .item-check {
-          color: #0057ff;
+          color: var(--el-color-primary);
           font-size: 16px;
         }
       }
@@ -427,7 +427,7 @@ defineExpose({
       gap: 8px;
       flex: 1;
       font-size: 13px;
-      color: #606266;
+      color: var(--el-text-color-regular);
       transition: all 0.2s ease;
       width: 100%;
 
@@ -435,7 +435,7 @@ defineExpose({
         width: 16px;
         height: 16px;
         font-size: 16px;
-        color: #909399;
+        color: var(--el-text-color-secondary);
         flex-shrink: 0;
         transition: color 0.2s ease;
       }
@@ -456,7 +456,7 @@ defineExpose({
   border: none;
   border-radius: 4px;
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   cursor: pointer;
   user-select: none;
   transition: all 0.2s ease;
@@ -464,12 +464,22 @@ defineExpose({
 
   &:hover {
     color: #f56c6c;
-    background-color: #fef0f0;
+    background-color: var(--el-color-danger-light-9);
   }
 
   &:active {
     color: #c81d1d;
-    background-color: #fde2e2;
+    background-color: var(--el-color-danger-light-8);
+  }
+}
+
+.prev-next-btn {
+  border: 1px solid var(--action-btn-border);
+  color: var(--btn-icon-color);
+  background: var(--el-bg-color);
+
+  &:hover {
+    background: var(--el-fill-color-light);
   }
 }
 </style>

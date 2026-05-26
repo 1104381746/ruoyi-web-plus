@@ -19,6 +19,11 @@ export const useUserStore = defineStore(
     const setUserInfo = (value: LoginUser) => {
       userInfo.value = value;
     };
+    const updateUserInfo = (partial: Partial<LoginUser>) => {
+      if (userInfo.value) {
+        Object.assign(userInfo.value, partial);
+      }
+    };
     const clearUserInfo = () => {
       userInfo.value = void 0;
     };
@@ -49,6 +54,7 @@ export const useUserStore = defineStore(
       clearToken,
       userInfo,
       setUserInfo,
+      updateUserInfo,
       clearUserInfo,
       logout,
       // 新增：暴露弹框状态和方法

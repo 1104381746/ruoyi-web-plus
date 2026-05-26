@@ -243,6 +243,10 @@ export interface ChatMessageVo {
    */
   content?: string;
   /**
+   * 创建时间
+   */
+  createTime?: string;
+  /**
    * 扣除金额
    */
   deductCost?: number;

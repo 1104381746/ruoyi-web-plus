@@ -187,7 +187,7 @@ onBeforeUnmount(() => {
   .tip {
     font-size: 16px;
     font-weight: 500;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 
   .qr-img-wrapper {
@@ -196,7 +196,7 @@ onBeforeUnmount(() => {
     height: 180px;
     padding: 12px;
     overflow: hidden;
-    border: 1px solid #f0f2f5;
+    border: 1px solid var(--el-border-color-lighter);
     border-radius: 16px;
     box-shadow: 0 2px 12px 0 rgb(0 0 0 / 8%);
 
@@ -208,12 +208,12 @@ onBeforeUnmount(() => {
       justify-content: center;
       width: 100%;
       height: 100%;
-      color: #909399;
+      color: var(--el-text-color-secondary);
       font-size: 14px;
 
       .loading-icon {
         font-size: 24px;
-        color: #409eff;
+        color: var(--el-color-primary);
       }
     }
 
@@ -226,7 +226,7 @@ onBeforeUnmount(() => {
 
       .el-icon {
         font-size: 18px;
-        color: #909399;
+        color: var(--el-text-color-secondary);
       }
     }
 
@@ -251,7 +251,7 @@ onBeforeUnmount(() => {
 
         .expired-text {
           font-size: 14px;
-          color: #909399;
+          color: var(--el-text-color-secondary);
         }
       }
     }
@@ -259,7 +259,7 @@ onBeforeUnmount(() => {
 
   .login-tips {
     font-size: 12px;
-    color: #909399;
+    color: var(--el-text-color-secondary);
     text-align: center;
   }
 }

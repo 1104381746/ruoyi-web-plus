@@ -53,6 +53,7 @@ export const useChatStore = defineStore('chat', () => {
         content: afterThinkContent,
         thinlCollapse: false,
         noStyle: !isUser,
+        createTime: item.createTime,
       };
 
       return result;

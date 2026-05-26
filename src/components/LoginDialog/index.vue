@@ -158,7 +158,7 @@ function onAfterLeave() {
   height: var(--login-dialog-height);
   padding: var(--login-dialog-padding);
   overflow: hidden;
-  background-color: #ffffff;
+  background-color: var(--el-bg-color);
   border-radius: var(--login-dialog-border-radius);
   box-shadow: 0 4px 24px rgb(0 0 0 / 10%);
 }
@@ -171,11 +171,7 @@ function onAfterLeave() {
   justify-content: center;
   width: calc(var(--login-dialog-width) / 2);
   padding: var(--login-dialog-section-padding);
-  background: linear-gradient(
-    233deg,
-    rgb(113 161 255 / 60%) 17.67%,
-    rgb(154 219 255 / 60%) 70.4%
-  );
+  background: var(--login-left-gradient);
 }
 .left-section .logo-wrap {
   display: flex;

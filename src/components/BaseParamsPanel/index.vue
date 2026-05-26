@@ -4,12 +4,12 @@ import { getModelList } from '@/api';
 
 const props = defineProps<{
   category: string;
-  modelId: number;
+  modelName: string;
   seed?: number;
 }>();
 
 const emit = defineEmits<{
-  'update:modelId': [value: number];
+  'update:modelName': [value: string];
   'update:seed': [value: number | undefined];
 }>();
 
@@ -21,8 +21,8 @@ onMounted(async () => {
     if (res.data.length === 0)
       res = await getModelList({ category: '' });
     models.value = res.data;
-    if (res.data.length > 0 && !props.modelId)
-      emit('update:modelId', res.data[0].id!);
+    if (res.data.length > 0 && !props.modelName)
+      emit('update:modelName', res.data[0].modelName!);
   }
   catch {}
 });
@@ -31,8 +31,8 @@ onMounted(async () => {
 <template>
   <div class="flex items-center gap-2">
     <span class="text-sm text-gray-600">模型</span>
-    <el-select :model-value="modelId" placeholder="选择模型" size="small" style="width: 160px" @update:model-value="emit('update:modelId', $event)">
-      <el-option v-for="m in models" :key="m.id!" :label="m.modelDescribe || m.modelName" :value="m.id!" />
+    <el-select :model-value="modelName" placeholder="选择模型" size="small" style="width: 160px" @update:model-value="emit('update:modelName', $event)">
+      <el-option v-for="m in models" :key="m.id!" :label="m.modelDescribe || m.modelName" :value="m.modelName!" />
     </el-select>
   </div>
   <div class="flex items-center gap-2">

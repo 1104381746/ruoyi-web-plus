@@ -41,6 +41,14 @@ export const layoutRouter: RouteRecordRaw[] = [
         name: 'video',
         component: () => import('@/pages/video/index.vue'),
       },
+      {
+        path: '/settings',
+        name: 'settings',
+        component: () => import('@/pages/settings/index.vue'),
+        meta: {
+          title: '设置',
+        },
+      },
     ],
   },
 ];

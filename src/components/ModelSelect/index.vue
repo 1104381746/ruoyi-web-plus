@@ -109,21 +109,21 @@ function handleClick(item: GetSessionListVO) {
 
 <style scoped lang="scss">
 .model-select-box {
-  background-color: #fff;
-  border: 1px solid rgb(0 0 0 / 10%);
-  color: rgb(0 0 0 / 85%);
+  background-color: var(--el-bg-color);
+  border: 1px solid var(--action-btn-border);
+  color: var(--el-text-color-primary);
   font-weight: 500;
   transition: all 0.2s ease;
 
   &:hover {
-    background-color: rgb(0 0 0 / 4%);
-    border-color: rgb(0 0 0 / 15%);
+    background-color: var(--action-btn-hover-bg);
+    border-color: var(--el-border-color);
   }
 
-  // 选中状态（模型始终选中，显示蓝色）
-  background: var(--el-color-primary-light-9, rgb(235.9 245.3 255));
-  border-color: var(--el-color-primary, #409eff);
-  color: var(--el-color-primary, #409eff);
+  // Always show selected state (primary color)
+  background: var(--el-color-primary-light-9);
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
   font-weight: 600;
 }
 
@@ -158,11 +158,11 @@ function handleClick(item: GetSessionListVO) {
   }
 
   &::-webkit-scrollbar-track {
-    background: #f5f5f5;
+    background: var(--scrollbar-track-bg);
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #cccccc;
+    background: var(--scrollbar-thumb-bg);
     border-radius: 4px;
   }
 }

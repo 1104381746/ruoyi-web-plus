@@ -36,7 +36,7 @@ async function handleSubmit() {
     const res = await login(formModel);
     console.log(res.data.access_token, 'res');
     res.data.access_token && userStore.setToken(res.data.access_token);
-    // res.data.userInfo && userStore.setUserInfo(res.data.userInfo);
+    res.data.userInfo && userStore.setUserInfo(res.data.userInfo);
     ElMessage.success('登录成功');
     userStore.closeLoginDialog();
     // 立刻获取回话列表
