@@ -12,42 +12,52 @@ export const useVideoStore = defineStore('video', () => {
   const cancelled = ref(false);
 
   async function generate(bo: GenerateVideoBo) {
-    if (!currentSessionId.value) {
-      const sessionStore = useSessionStore();
-      const session = await sessionStore.createTypedSession(bo.content, 'video');
-      currentSessionId.value = String(session.id!);
-    }
     cancelled.value = false;
     loading.value = true;
-    const placeholder = {
-      id: -Date.now(),
-      content: bo.content,
-      role: 'user',
-      totalTokens: 0,
-      videoUrl: '',
-      userId: 0,
-      modelName: bo.modelName,
-      sessionId: currentSessionId.value,
-      size: bo.size ?? '',
-      duration: bo.duration ?? 0,
-      seed: bo.seed ?? 0,
-      status: 0,
-      referenceImageUrl: bo.referenceImageUrl,
-      createTime: '',
-    } as VideoRecordVo;
-    sessionRecords.value.push(placeholder);
     try {
+      if (!currentSessionId.value) {
+        const sessionStore = useSessionStore();
+        const session = await sessionStore.createTypedSession(bo.content, 'video');
+        currentSessionId.value = String(session.id!);
+      }
+      const placeholder = {
+        id: -Date.now(),
+        content: bo.content,
+        role: 'user',
+        totalTokens: 0,
+        videoUrl: '',
+        userId: 0,
+        modelName: bo.modelName,
+        sessionId: currentSessionId.value,
+        size: bo.size ?? '',
+        duration: bo.duration ?? 0,
+        seed: bo.seed ?? 0,
+        status: 0,
+        referenceImageUrl: bo.referenceImageUrl,
+        createTime: '',
+      } as VideoRecordVo;
+      sessionRecords.value.push(placeholder);
       const res = await generateVideo({ ...bo, sessionId: currentSessionId.value });
       if (cancelled.value) return;
       const idx = sessionRecords.value.findIndex(r => r.id === placeholder.id);
-      if (idx !== -1)
-        sessionRecords.value.splice(idx, 1, res.data);
-      records.value.unshift(res.data);
-      total.value++;
+      if (idx !== -1) {
+        if (res.data) {
+          sessionRecords.value.splice(idx, 1, res.data);
+          records.value.unshift(res.data);
+          total.value++;
+        }
+        else {
+          // data 为空视为失败，标记状态而不是删除
+          sessionRecords.value.splice(idx, 1, { ...placeholder, id: Date.now(), status: 2 });
+        }
+      }
     }
     catch {
       if (cancelled.value) return;
-      sessionRecords.value = sessionRecords.value.filter(r => r.id !== placeholder.id);
+      // 将 placeholder 标记为失败，而不是删除（保留用户输入可见）
+      sessionRecords.value = sessionRecords.value.map(r =>
+        r != null && r.id < 0 ? { ...r, id: Date.now(), status: 2 } : r,
+      ).filter(r => r != null);
     }
     finally {
       loading.value = false;
@@ -57,9 +67,10 @@ export const useVideoStore = defineStore('video', () => {
   function cancel() {
     cancelled.value = true;
     loading.value = false;
-    for (const r of sessionRecords.value) {
-      if (!r.videoUrl) r.status = 3;
-    }
+    // 将 placeholder 标记为已取消，而不是删除
+    sessionRecords.value = sessionRecords.value.map(r =>
+      r != null && r.id < 0 ? { ...r, id: Date.now(), status: 3 } : r,
+    ).filter(r => r != null);
     if (currentSessionId.value) {
       cancelVideo(currentSessionId.value).catch(() => {});
     }

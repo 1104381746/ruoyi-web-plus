@@ -8,6 +8,7 @@ import FilesSelect from '@/components/FilesSelect/index.vue';
 import ModelSelect from '@/components/ModelSelect/index.vue';
 import { useChatStore } from '@/stores/modules/chat';
 import { useFilesStore } from '@/stores/modules/files';
+import { useUserStore } from '@/stores/modules/user';
 
 const props = defineProps<{
   modelValue?: string;
@@ -22,6 +23,7 @@ const emit = defineEmits<{
 
 const chatStore = useChatStore();
 const filesStore = useFilesStore();
+const userStore = useUserStore();
 
 const senderValue = computed({
   get: () => props.modelValue || '',
@@ -134,7 +136,9 @@ watch(
 
 // 组件挂载时加载知识库列表
 onMounted(() => {
-  loadKnowledgeList();
+  if (userStore.token) {
+    loadKnowledgeList();
+  }
   // 从 store 中同步知识库选择状态
   if (chatStore.knowledgeId) {
     const knowledge = knowledgeList.value.find(k => k.id === chatStore.knowledgeId);

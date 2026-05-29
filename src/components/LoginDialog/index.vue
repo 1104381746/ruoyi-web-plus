@@ -155,7 +155,7 @@ function onAfterLeave() {
   display: flex;
   width: fit-content;
   max-width: 90%;
-  height: var(--login-dialog-height);
+  min-height: var(--login-dialog-height);
   padding: var(--login-dialog-padding);
   overflow: hidden;
   background-color: var(--el-bg-color);
@@ -213,8 +213,7 @@ function onAfterLeave() {
 }
 .right-section .content-wrapper {
   flex: 1;
-  padding: 8px 0;
-  overflow: hidden;
+  padding: 24px 0;
 }
 .right-section .content-title {
   display: flex;
@@ -255,7 +254,7 @@ function onAfterLeave() {
     display: none !important;
   }
   .glass-dialog {
-    height: var(--login-dialog-height);
+    min-height: var(--login-dialog-height);
     padding: var(--login-dialog-padding);
   }
   .right-section {

@@ -50,7 +50,8 @@ function jwtPlugin(): HookFetchPlugin<BaseResponse> {
         userStore.logout();
         userStore.openLoginDialog();
       }
-      ElMessage.error(response.result?.msg);
+      const msg = response.result?.msg;
+      ElMessage.error(msg?.includes(':') ? msg.split(':')[0].trim() : msg);
       return Promise.reject(response);
     },
   };

@@ -85,6 +85,9 @@ onMounted(() => {
 // 记录进入思考中
 let isThinking = false;
 
+// 记录上一次渲染的会话 id，用于判断是否切换了会话
+let lastRenderedSessionId = '';
+
 watch(
   () => route.params?.id,
   async (_id_) => {
@@ -94,6 +97,29 @@ watch(
       toolCallKeyCounter = 0;
 
       if (_id_ !== 'not_login') {
+        // 正在加载中（SSE进行中），不覆盖当前消息
+        if (isLoading.value) {
+          lastRenderedSessionId = `${_id_}`;
+          return;
+        }
+
+        // 同一会话 id 且本地已有消息（SSE 出错/取消后 watch 重触发），直接保留本地消息
+        if (`${_id_}` === lastRenderedSessionId && bubbleItems.value.length > 0) {
+          chatStore.chatMap[`${_id_}`] = bubbleItems.value as any;
+          setTimeout(() => { bubbleListRef.value?.scrollToBottom(); }, 350);
+          return;
+        }
+
+        lastRenderedSessionId = `${_id_}`;
+
+        // 如果本地有待发送内容，优先发送（避免 requestChatList 异步完成后覆盖已添加的消息）
+        const pendingContent = localStorage.getItem('chatContent');
+        if (pendingContent) {
+          localStorage.removeItem('chatContent');
+          setTimeout(() => { startSSE(pendingContent); }, 100);
+          return;
+        }
+
         // 判断的当前会话id是否有聊天记录，有缓存则直接赋值展示
         if (chatStore.chatMap[`${_id_}`] && chatStore.chatMap[`${_id_}`].length) {
           bubbleItems.value = chatStore.chatMap[`${_id_}`] as MessageItem[];
@@ -106,6 +132,12 @@ watch(
 
         // 无缓存则请求聊天记录
         await chatStore.requestChatList(`${_id_}`);
+        // 如果在请求期间 startSSE 已经添加了消息，不覆盖
+        if (bubbleItems.value.length > 0) {
+          chatStore.chatMap[`${_id_}`] = bubbleItems.value as any;
+          setTimeout(() => { bubbleListRef.value?.scrollToBottom(); }, 350);
+          return;
+        }
         // 请求聊天记录后，赋值回显，并滚动到底部
         bubbleItems.value = chatStore.chatMap[`${_id_}`] as MessageItem[];
 
@@ -115,14 +147,12 @@ watch(
         }, 350);
       }
 
-      // 如果本地有发送内容 ，则直接发送
+      // 如果本地有发送内容 ，则直接发送（兜底，正常情况已在上面处理）
       const v = localStorage.getItem('chatContent');
       if (v) {
-        // 发送消息
         setTimeout(() => {
           startSSE(v);
         }, 350);
-
         localStorage.removeItem('chatContent');
       }
     }
@@ -145,6 +175,12 @@ async function startSSE(chatContent: string) {
     inputValue.value = '';
     addMessage(chatContent, true);
     addMessage('', false);
+
+    // 立即同步到 chatMap，防止异常时消息丢失
+    const currentId = route.params?.id;
+    if (currentId && currentId !== 'not_login') {
+      chatStore.chatMap[`${currentId}`] = bubbleItems.value as any;
+    }
 
     // 这里有必要调用一下 BubbleList 组件的滚动到底部 手动触发 自动滚动
     bubbleListRef.value?.scrollToBottom();
@@ -191,6 +227,11 @@ async function startSSE(chatContent: string) {
       lastMessage.loading = false;
       bubbleItems.value = [...bubbleItems.value];
     }
+    // 出错时立即同步 chatMap，防止 watch 触发时用旧缓存覆盖
+    const sessionId = route.params?.id;
+    if (sessionId && sessionId !== 'not_login') {
+      chatStore.chatMap[`${sessionId}`] = bubbleItems.value as any;
+    }
   }
   finally {
     // 停止打字器状态
@@ -206,6 +247,11 @@ async function startSSE(chatContent: string) {
       // 重置isThinking标志
       isThinking = false;
       bubbleItems.value = [...bubbleItems.value];
+    }
+    // 同步更新 chatMap 缓存，避免切换会话后回来看到旧数据
+    const sessionId = route.params?.id;
+    if (sessionId && sessionId !== 'not_login') {
+      chatStore.chatMap[`${sessionId}`] = bubbleItems.value as any;
     }
   }
 }
@@ -411,6 +457,12 @@ async function cancelSSE() {
   cancel();
   if (bubbleItems.value.length) {
     bubbleItems.value[bubbleItems.value.length - 1].typing = false;
+    bubbleItems.value[bubbleItems.value.length - 1].loading = false;
+    bubbleItems.value = [...bubbleItems.value];
+  }
+  const sessionId = route.params?.id;
+  if (sessionId && sessionId !== 'not_login') {
+    chatStore.chatMap[`${sessionId}`] = bubbleItems.value as any;
   }
 }
 

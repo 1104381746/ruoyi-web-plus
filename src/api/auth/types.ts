@@ -129,22 +129,36 @@ export interface EmailCodeDTO {
   username?: string;
 }
 
-// 邮箱注册
+// 注册
 export interface RegisterDTO {
-  /**
-   * 邮箱
-   */
+  tenantId: string;
   username: string;
-  /**
-   * 密码
-   */
+  email: string;
   password: string;
-  /**
-   * 验证码
-   */
-  code: string;
-  /**
-   * 确认密码
-   */
+  emailCode: string;
   confirmPassword?: string;
+}
+
+// 第三方社交登录
+export interface SocialLoginDTO {
+  source: string;
+  socialCode: string;
+  socialState: string;
+  clientId?: string;
+  grantType?: string;
+  tenantId?: string;
+}
+
+// 租户列表
+export interface TenantListVo {
+  tenantId: string;
+  companyName: string;
+  domain: string;
+}
+
+export interface LoginTenantVo {
+  tenantEnabled: boolean;
+  multiTenancy: boolean;
+  defaultTenantId: string;
+  voList: TenantListVo[];
 }

@@ -1,13 +1,16 @@
 <!-- 注册表单 -->
 <script lang="ts" setup>
 import type { FormInstance, FormRules } from 'element-plus';
-import type { RegisterDTO } from '@/api/auth/types';
+import type { RegisterDTO, TenantListVo } from '@/api/auth/types';
 import { useCountdown } from '@vueuse/core';
 import { reactive, ref } from 'vue';
-import { emailCode, register } from '@/api';
+import { emailCode, getTenantList, register } from '@/api';
 import { useLoginFormStore } from '@/stores/modules/loginForm';
 
 const loginFromStore = useLoginFormStore();
+const envTenantId = import.meta.env.VITE_TENANT_ID || '000000';
+const tenantEnabled = ref(false);
+const tenantList = ref<TenantListVo[]>([]);
 const countdown = shallowRef(60);
 const { start, stop, resume } = useCountdown(countdown, {
   onComplete() {
@@ -21,13 +24,24 @@ const { start, stop, resume } = useCountdown(countdown, {
 const formRef = ref<FormInstance>();
 
 const formModel = ref<RegisterDTO>({
+  tenantId: '',
   username: '',
+  email: '',
   password: '',
-  code: '',
+  emailCode: '',
   confirmPassword: '',
 });
 
 const rules = reactive<FormRules<RegisterDTO>>({
+  tenantId: [{
+    validator: (_, value) => {
+      if (tenantEnabled.value && !value) {
+        return new Error('请选择租户');
+      }
+      return true;
+    },
+    trigger: 'change',
+  }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
   confirmPassword: [
     { required: true, message: '请输入确认密码', trigger: 'blur' },
@@ -42,6 +56,10 @@ const rules = reactive<FormRules<RegisterDTO>>({
     },
   ],
   username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 2, max: 30, message: '用户名长度在2到30个字符之间', trigger: 'blur' },
+  ],
+  email: [
     { required: true, message: '请输入邮箱', trigger: 'blur' },
     {
       validator: (_, value) => {
@@ -53,6 +71,26 @@ const rules = reactive<FormRules<RegisterDTO>>({
       trigger: 'blur',
     },
   ],
+  emailCode: [
+    { required: true, message: '请输入验证码', trigger: 'blur' },
+  ],
+});
+
+onMounted(async () => {
+  try {
+    const res = await getTenantList();
+    if (res.data) {
+      tenantEnabled.value = res.data.multiTenancy ?? res.data.tenantEnabled ?? false;
+      tenantList.value = res.data.voList || [];
+      if (!tenantEnabled.value) {
+        formModel.value.tenantId = res.data.defaultTenantId || envTenantId;
+      }
+    }
+  }
+  catch {
+    tenantEnabled.value = false;
+    formModel.value.tenantId = envTenantId;
+  }
 });
 
 function isEmail(email: string) {
@@ -63,27 +101,30 @@ async function handleSubmit() {
   try {
     await formRef.value?.validate();
     const params: RegisterDTO = {
+      tenantId: formModel.value.tenantId || envTenantId,
       username: formModel.value.username,
+      email: formModel.value.email,
       password: formModel.value.password,
-      code: formModel.value.code,
+      emailCode: formModel.value.emailCode,
     };
     await register(params);
     ElMessage.success('注册成功');
     formRef.value?.resetFields();
     resume();
+    loginFromStore.setLoginFormType('AccountPassword');
   }
-  catch (error) {
-    console.error('请求错误:', error);
+  catch (error: any) {
+    ElMessage.error(error?.data?.msg || error?.msg || error?.message || '注册失败');
   }
 }
 
 // 获取验证码
 async function getEmailCode() {
-  if (formModel.value.username === '') {
+  if (formModel.value.email === '') {
     ElMessage.error('请输入邮箱');
     return;
   }
-  if (!isEmail(formModel.value.username)) {
+  if (!isEmail(formModel.value.email)) {
     return;
   }
   if (countdown.value > 0 && countdown.value < 60) {
@@ -91,11 +132,11 @@ async function getEmailCode() {
   }
   try {
     start();
-    await emailCode({ username: formModel.value.username });
+    await emailCode({ username: formModel.value.email });
     ElMessage.success('验证码发送成功');
   }
-  catch (error) {
-    console.error('请求错误:', error);
+  catch (error: any) {
+    ElMessage.error(error?.data?.msg || error?.msg || error?.message || '发送验证码失败');
     stop();
   }
 }
@@ -110,8 +151,24 @@ async function getEmailCode() {
       style="width: 230px"
       @submit.prevent="handleSubmit"
     >
+      <el-form-item v-if="tenantEnabled" prop="tenantId">
+        <el-select v-model="formModel.tenantId" placeholder="请选择租户" style="width: 100%">
+          <el-option v-for="t in tenantList" :key="t.tenantId" :label="t.companyName" :value="t.tenantId" />
+        </el-select>
+      </el-form-item>
+
       <el-form-item prop="username">
-        <el-input v-model="formModel.username" placeholder="请输入邮箱" autocomplete="off">
+        <el-input v-model="formModel.username" placeholder="请输入用户名" autocomplete="off">
+          <template #prefix>
+            <el-icon>
+              <User />
+            </el-icon>
+          </template>
+        </el-input>
+      </el-form-item>
+
+      <el-form-item prop="email">
+        <el-input v-model="formModel.email" placeholder="请输入邮箱" autocomplete="off">
           <template #prefix>
             <el-icon>
               <Message />
@@ -120,8 +177,8 @@ async function getEmailCode() {
         </el-input>
       </el-form-item>
 
-      <el-form-item prop="code">
-        <el-input v-model="formModel.code" placeholder="请输入验证码" autocomplete="off">
+      <el-form-item prop="emailCode">
+        <el-input v-model="formModel.emailCode" placeholder="请输入验证码" autocomplete="off">
           <template #prefix>
             <el-icon>
               <Bell />

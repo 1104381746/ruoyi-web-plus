@@ -53,8 +53,14 @@ export const layoutRouter: RouteRecordRaw[] = [
   },
 ];
 
-// staticRouter[静态路由] 预留
-export const staticRouter: RouteRecordRaw[] = [];
+// staticRouter[静态路由]
+export const staticRouter: RouteRecordRaw[] = [
+  {
+    path: '/social-callback',
+    name: 'SocialCallback',
+    component: () => import('@/pages/social-callback/index.vue'),
+  },
+];
 
 // errorRouter (错误页面路由)
 export const errorRouter = [
